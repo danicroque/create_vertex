@@ -1,0 +1,39 @@
+import os
+import csv
+import requests
+import json
+from base64 import b64encode
+
+self.dir_csv = self.getParam("dir_csv")
+self.delimiter_csv = self.getParam("delimiter_csv")
+
+self.url =  self.getParam("url_database") #url = xxxxx:2480 (without ":2480")
+url_database = url + ":2480"
+
+self.user = self.getParam("user")
+self.password = self.getParam("password")
+user_password = user + ":" +password
+
+userAndPass = b64encode("user_password").decode("ascii") 
+headers = { 'Authorization' : 'Basic %s' %  userAndPass }
+self.dir_database = self.getParam("dir_database")
+
+def postVertex(row):
+    content = { "@class": row } 
+    r = requests.post(url_database + dir_database, headers = headers, data = json.dumps(content))   
+    jsonD = json.loads(r.text)   
+    try:
+        return jsonD["@rid"]
+    except:
+        error =  jsonD["errors"][0]["content"]
+        searchObj = error.index('RID=#')
+        return error[searchObj+4:]
+
+
+with open( dir_csv , mode="rU") as f: 
+    try:
+        reader = csv.reader(f, delimiter = delimiter_csv) 
+        for row in reader:
+            postVertex(row)
+    finally:
+        f.close()
